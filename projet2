@@ -7,7 +7,6 @@ import csv
 def scrapLivre(urlLivres):
     #url à parser
     urlParser = urlLivres
-    #saisir l'url
     r = requests.get(urlParser)
     r.encoding='utf-8'
 
@@ -24,7 +23,7 @@ def scrapLivre(urlLivres):
     # extraire titre
     titreLivre = soup.select_one('div.product_main > h1')
     infosLivre["title"] = titreLivre.text
-    print(infosLivre)
+    # print(infosLivre)
     #liste celle pour récuperer le texte suivant
     tdList = []
     table = soup.find('table', {'class': 'table table-striped'})
@@ -60,27 +59,47 @@ def scrapLivre(urlLivres):
     infoLivre.append(infosLivre)
     return infoLivre
 
+
 #parser url catégorie
-urlCategorie = 'https://books.toscrape.com/catalogue/category/books/travel_2/index.html'
+urlCategorie = 'https://books.toscrape.com/catalogue/category/books/mystery_3/index.html'
 rcategorie = requests.get(urlCategorie)
 rcategorie.encoding='utf-8'
 soup = BeautifulSoup(rcategorie.text, 'html.parser')
 
-#récupérer les url des livres
-livres = soup.find_all('h3')
-urlLivres = []
-for livre in livres:
-    urlLivre = livre.find('a')['href']
-    # Utilise l'URL de la page catégorie comme base
-    urlLivre = urljoin(urlCategorie, urlLivre)
-    urlLivres.append(urlLivre)
-print(urlLivres)
-
 resultats = []
-for url in urlLivres:
-    info = scrapLivre(url)
-    resultats.append(info)
-print(resultats)
+
+#gérer la pagination
+page = 1
+next_page =True
+while next_page:
+    url_page = f"{urlCategorie.replace('index.html','')}page-{page}.html"
+    response = requests.get(url_page)
+    response.encoding='utf-8'
+    html_page = response.text
+    soup = BeautifulSoup(html_page, 'html.parser')
+    next_button = soup.find('li', class_='next')
+    print(url_page)
+   
+    #récupérer les url des livres
+    livres = soup.find_all('h3')
+    urlLivres = []    
+    for livre in livres:
+        urlLivre = livre.find('a')['href']
+        # Utilise l'URL de la page catégorie comme base
+        urlLivre = urljoin(url_page, urlLivre)
+        urlLivres.append(urlLivre)
+    # print(urlLivres)
+
+        info = {}
+    for url in urlLivres:
+        info = scrapLivre(url)
+        resultats.extend(info)
+    print(info)
+
+    if next_button:
+        page += 1
+    else:
+        next_page = False
 
 #sauvegarder les données dans un fichier CSV
 with open('livres.csv', mode='w', newline='', encoding='utf-8')as fichier_csv:
@@ -88,8 +107,7 @@ with open('livres.csv', mode='w', newline='', encoding='utf-8')as fichier_csv:
     writer = csv.DictWriter(fichier_csv, fieldnames=fieldnames)
     writer.writeheader()
     for livre in resultats:
-        for info in livre:
-            writer.writerow(info)
+        writer.writerow(livre)
 fichier_csv.close()
 print("Données sauvegardées dans livres.csv")
 
