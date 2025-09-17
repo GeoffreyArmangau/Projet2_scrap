@@ -3,6 +3,18 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import csv
+import os
+
+
+
+Fichier_recuperation = 'Recuperation_Books_online'
+dossier_images_global = os.path.join(Fichier_recuperation, 'images')
+dossier_csv_global = os.path.join(Fichier_recuperation, 'csv')
+
+for dossier in [Fichier_recuperation, dossier_images_global, dossier_csv_global]:
+    if not os.path.exists(dossier):
+        os.makedirs(dossier)
+
 
 def scrapLivre(urlLivres):
     #url à parser
@@ -12,105 +24,125 @@ def scrapLivre(urlLivres):
 
     # récuperer le texte
     soup = BeautifulSoup(r.text, 'html.parser')
-    #print(soup.prettify())
-
+    
     #creation de la liste de récupération et de la bibliotheque
     infoLivre=[]
     infosLivre = {}
 
-    # extraire product_page_url
     infosLivre["product_page_url"] = urlParser
-    # extraire titre
     titreLivre = soup.select_one('div.product_main > h1')
     infosLivre["title"] = titreLivre.text
-    # print(infosLivre)
-    #liste celle pour récuperer le texte suivant
     tdList = []
     table = soup.find('table', {'class': 'table table-striped'})
     for td in table.find_all('td'):
         tdList.append(td.text)
-    # extraire universal_product_code (upc)
     infosLivre["universal_product_code (upc)"] = tdList[0]
-    # extraire price_excluding_tax
     infosLivre["price_excluding_tax"] = tdList[2]
-    # extraire price_including_tax
+
     infosLivre["price_including_tax"] = tdList[3]
-    # extraire number_available
-    #stock en nombre
     stockAvailable=0
     if tdList[5].startswith('In stock'):
         match=re.search(r"\d+",tdList[5])
         if match:
             stockAvailable=int(match.group())
     infosLivre["number_available"] = stockAvailable
-    # extraire category
     category = soup.select('ul.breadcrumb > li > a')
     infosLivre["category"] = category[2].text
-    # extraire review_rating
     rating = soup.find('p', class_='star-rating')['class'][1]
     infosLivre["review_rating"] = rating
-    # extraire image_url
     image = soup.find('div', class_='item active').find('img')['src']
     image_url = urljoin('https://books.toscrape.com/', image)
     infosLivre["image_url"] = image_url
-
-    # extraire description
     description = soup.find('div', id='product_description')
     infoLivre.append(infosLivre)
     return infoLivre
 
+def scrapCategorie(urlCategorie):
+    nomCategorie = urlCategorie.split("/")[-2].split("_")[0]
+    resultats = []
+    page = 1
+    next_page = True
 
-#parser url catégorie
-urlCategorie = 'https://books.toscrape.com/catalogue/category/books/mystery_3/index.html'
-rcategorie = requests.get(urlCategorie)
-rcategorie.encoding='utf-8'
-soup = BeautifulSoup(rcategorie.text, 'html.parser')
+    # Crée un dossier pour les images de la catégorie
+    dossier_images = os.path.join(dossier_images_global, f'images_{nomCategorie}')
+    if not os.path.exists(dossier_images):
+        os.makedirs(dossier_images)
+        
+    # Scrappe d'abord la page index.html
+    urlPage = urlCategorie
+    while next_page:
+        response = requests.get(urlPage)
+        response.encoding = 'utf-8'
+        soup = BeautifulSoup(response.text, 'html.parser')
+        next_button = soup.find('li', class_='next')
+        print(urlPage)
 
-resultats = []
+        # Récupérer les url des livres
+        livres = soup.find_all('h3')
+        urlLivres = []
+        for livre in livres:
+            urlLivre = livre.find('a')['href']
+            urlLivre = urljoin(urlPage, urlLivre)
+            urlLivres.append(urlLivre)
 
-#gérer la pagination
-page = 1
-next_page =True
-while next_page:
-    url_page = f"{urlCategorie.replace('index.html','')}page-{page}.html"
-    response = requests.get(url_page)
-    response.encoding='utf-8'
-    html_page = response.text
-    soup = BeautifulSoup(html_page, 'html.parser')
-    next_button = soup.find('li', class_='next')
-    print(url_page)
-   
-    #récupérer les url des livres
-    livres = soup.find_all('h3')
-    urlLivres = []    
-    for livre in livres:
-        urlLivre = livre.find('a')['href']
-        # Utilise l'URL de la page catégorie comme base
-        urlLivre = urljoin(url_page, urlLivre)
-        urlLivres.append(urlLivre)
-    # print(urlLivres)
+        for url in urlLivres:
+            info = scrapLivre(url)
+            resultats.extend(info)
+            image_url = info[0]["image_url"]
+            nom_image = image_url.split("/")[-1]
+            chemin_image = os.path.join(dossier_images, nom_image)
+            try:
+                img_data = requests.get(image_url).content
+                with open(chemin_image, 'wb') as handler:
+                    handler.write(img_data)
+            except Exception as e:
+                print(f"Erreur téléchargement image {image_url}: {e}")
 
-        info = {}
-    for url in urlLivres:
-        info = scrapLivre(url)
-        resultats.extend(info)
-    print(info)
+        if next_button:
+            page += 1
+            # Génère l'URL de la page suivante
+            urlPage = urlCategorie.replace('index.html', f'page-{page}.html')
+        else:
+            next_page = False
 
-    if next_button:
-        page += 1
-    else:
-        next_page = False
+    # Sauvegarde CSV
+    csvFichier = f'{nomCategorie}.csv'
+    csvPath = os.path.join(dossier_csv_global, csvFichier)
+    with open(csvPath, mode='w', newline='', encoding='utf-8') as fichier_csv:
+        fieldnames = ["product_page_url", "universal_product_code (upc)", "title", "price_excluding_tax", "price_including_tax", "number_available", "category", "review_rating", "image_url"]
+        writer = csv.DictWriter(fichier_csv, fieldnames=fieldnames)
+        writer.writeheader()
+        for livre in resultats:
+            writer.writerow(livre)
+    print(f"Données sauvegardées dans {nomCategorie}.csv")
+    print(f"Images téléchargées dans {dossier_images}")
+    return resultats
 
-#sauvegarder les données dans un fichier CSV
-with open('livres.csv', mode='w', newline='', encoding='utf-8')as fichier_csv:
-    fieldnames = ["product_page_url", "universal_product_code (upc)", "title", "price_excluding_tax", "price_including_tax", "number_available", "category", "review_rating", "image_url"]
-    writer = csv.DictWriter(fichier_csv, fieldnames=fieldnames)
-    writer.writeheader()
-    for livre in resultats:
-        writer.writerow(livre)
-fichier_csv.close()
-print("Données sauvegardées dans livres.csv")
+def scrapPageAccueuil (urlSite):
+    # scrap du site books to scraps
+    urlSite = "https://books.toscrape.com/index.html"
+    rSite = requests.get(urlSite)
+    rSite.encoding ='utf-8'
+    soupSite = BeautifulSoup(rSite.text, 'html.parser')
 
+    #récupérer les url du catalogue
+    urlCategories =[]
+    catalogue = soupSite.find('ul', class_="nav-list")
+    for link in catalogue.find_all('a'):
+        urlRecups = link.get('href')
+        urlRecup = urljoin(urlSite, urlRecups)
+        urlCategories.append(urlRecup)
+    #suppression du "Books"
+    del urlCategories[0]
+    
+
+    #parcourir les categories
+    for url in urlCategories:
+        infos = scrapCategorie(url)
+    return urlCategories
+
+if __name__ == "__main__":
+    scrapPageAccueuil("https://books.toscrape.com/index.html")
 
 
  
