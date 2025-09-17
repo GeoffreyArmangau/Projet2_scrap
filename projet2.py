@@ -5,8 +5,6 @@ from urllib.parse import urljoin
 import csv
 import os
 
-
-
 Fichier_recuperation = 'Recuperation_Books_online'
 dossier_images_global = os.path.join(Fichier_recuperation, 'images')
 dossier_csv_global = os.path.join(Fichier_recuperation, 'csv')
