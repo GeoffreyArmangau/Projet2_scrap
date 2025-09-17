@@ -159,3 +159,4 @@ print(scrapLivre(urlLivres[0]))
 #     writer.writerows(infoLivre)
 #     csvfile.close()
 # #print("Fichier CSV créé avec succès.")
+
