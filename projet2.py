@@ -14,10 +14,10 @@ for folder in [Scrap_folder, Global_picture_folder, Global_CSV_folder]:
         os.makedirs(folder)
 
 
-def scrapLivre(urlBooks):
+def scrap_book(url_books):
     #url à parser
-    urlParser = urlBooks
-    r = requests.get(urlParser)
+    url_parser = url_books
+    r = requests.get(url_parser)
     r.encoding='utf-8'
 
     # récuperer le texte
@@ -46,7 +46,7 @@ def scrapLivre(urlBooks):
     else:
         description = ""
   
-    return {'product_page_url': urlParser,
+    return {'product_page_url': url_parser,
             'universal_product_code (upc)': tdList[0],
             'title': book_title.text,
             'category' : category[2].text,
@@ -60,8 +60,8 @@ def scrapLivre(urlBooks):
 
 
 
-def scrapCategorie(urlCategory):
-    data_category_name = urlCategory.split("/")[-2].split("_")[0]
+def scrap_category(url_category):
+    data_category_name = url_category.split("/")[-2].split("_")[0]
     results = []
     page = 1
     next_page = True
@@ -72,7 +72,7 @@ def scrapCategorie(urlCategory):
         os.makedirs(folder_pictures)
         
     # Scrappe d'abord la page index.html
-    urlPage = urlCategory
+    urlPage = url_category
     while next_page:
         response = requests.get(urlPage)
         response.encoding = 'utf-8'
@@ -82,14 +82,14 @@ def scrapCategorie(urlCategory):
 
         # Récupérer les url des books
         books = soup.find_all('h3')
-        urlBooks = []
+        url_books = []
         for livre in books:
-            urlLivre = livre.find('a')['href']
-            urlLivre = urljoin(urlPage, urlLivre)
-            urlBooks.append(urlLivre)
+            url_book = livre.find('a')['href']
+            url_book = urljoin(urlPage, url_book)
+            url_books.append(url_book)
 
-        for url in urlBooks:
-            info = scrapLivre(url)
+        for url in url_books:
+            info = scrap_book(url)
             results.append(info)
             picture_url = info["picture_url"]
             nom_picture = picture_url.split("/")[-1]
@@ -104,7 +104,7 @@ def scrapCategorie(urlCategory):
         if next_button:
             page += 1
             # Génère l'URL de la page suivante
-            urlPage = urlCategory.replace('index.html', f'page-{page}.html')
+            urlPage = url_category.replace('index.html', f'page-{page}.html')
         else:
             next_page = False
 
@@ -121,31 +121,26 @@ def scrapCategorie(urlCategory):
     print(f"images téléchargées dans {folder_pictures}")
     return results
 
-def scrapPageAccueuil (urlSite):
+def scrap_main_page (url_site):
     # scrap du site books to scraps
-    urlSite = "https://books.toscrape.com/index.html"
-    rSite = requests.get(urlSite)
-    rSite.encoding ='utf-8'
-    soupSite = BeautifulSoup(rSite.text, 'html.parser')
+    url_site = "https://books.toscrape.com/index.html"
+    r_site = requests.get(url_site)
+    r_site.encoding ='utf-8'
+    soupSite = BeautifulSoup(r_site.text, 'html.parser')
 
     #récupérer les url du catalogue
-    urlCategorys =[]
+    url_categorys =[]
     catalogue = soupSite.find('ul', class_="nav-list")
     for link in catalogue.find_all('a'):
-        urlRecups = link.get('href')
-        urlRecup = urljoin(urlSite, urlRecups)
-        urlCategorys.append(urlRecup)
-    #suppression du "Books"
-    del urlCategorys[0]
+        url_recups = link.get('href')
+        url_recup = urljoin(url_site, url_recups)
+        url_categorys.append(url_recup)
+    #suppression du catalogue "Books"
+    del url_categorys[0]
     
 
-    #parcourir les categories
-    for url in urlCategorys:
-        infos = scrapCategorie(url)
-    return urlCategorys
-
 if __name__ == "__main__":
-    scrapPageAccueuil("https://books.toscrape.com/index.html")
+    scrap_main_page("https://books.toscrape.com/index.html")
 
 
  
