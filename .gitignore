@@ -1,0 +1,5 @@
+.idea/
+.venv/
+.vscode/
+*.csv
+Scraping_Books_online/

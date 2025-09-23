@@ -16,9 +16,9 @@ Les données sont sauvegardées dans des fichiers CSV et les images dans des dos
 À l'exécution, le programme crée la structure suivante :
 
 ```
-Recuperation_Books_online/
-├── images/
-│   ├── images_nomCategorie/
+Scraping_Books_online/
+├── pictures/
+│   ├── pictures_nomCategorie/
 │   └── ...
 ├── csv/
 │   ├── nomCategorie.csv
