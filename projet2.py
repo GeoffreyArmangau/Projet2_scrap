@@ -36,7 +36,7 @@ def scrap_book(url_books):
         match=re.search(r"\d+",tdList[5])
         if match:
             stockAvailable=int(match.group())
-    
+    category = soup.select('ul.breadcrumb > li > a')
     rating = soup.find('p', class_='star-rating')['class'][1]
     picture = soup.find('div', class_='item active').find('img')['src']
     picture_url = urljoin('https://books.toscrape.com/', picture)
@@ -50,7 +50,7 @@ def scrap_book(url_books):
     return {'product_page_url': url_parser,
             'universal_product_code (upc)': tdList[0],
             'title': book_title.text,
-            'category' : tdList[2],
+            'category' : category[2].text,
             'price_including_tax': tdList[3],
             'price_excluding_tax': tdList[2],
             'number_available': stockAvailable,
