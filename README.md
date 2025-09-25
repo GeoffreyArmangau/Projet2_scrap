@@ -27,12 +27,22 @@ Scraping_Books_online/
 
 ## Installation
 
-1. Clonez ce dépôt ou copiez les fichiers dans un dossier local.
-2. Installez les dépendances nécessaires présentes dans le requirements.txt via la commande "pip install -r requirements"
+1. Ouvrez votre terminal
+2. Clonez ce dépôt ou copiez les fichiers dans un dossier local via le terminal en utilisant la commande `git clone https://github.com/GeoffreyArmangau/Projet2_scrap.git`
+3. Entrer dans le dprojet `cd Projet2_scrap`
+4. Créez un environnement pour installer les dépendances nécessaires 
+Avec Windows :
+    - py -m venv env
+    - env\Scripts\activate
+
+Avec Linux :
+    - python3 -m venv env
+    - source env/bin/activate
+5. Installez les dépendances nécessaires présentes dans le requirements.txt via la commande "pip install -r requirements"
 
 ## Utilisation
 
-Lancez le script principal :
+Lancez le script principal depuis votre environnement :
 
 python Projet2.py
 

@@ -2,6 +2,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+import urllib.request
 import csv
 import os
 
@@ -18,7 +19,7 @@ def scrap_book(url_books):
     #url à parser
     url_parser = url_books
     r = requests.get(url_parser)
-    r.encoding='utf-8'
+    r.encoding = 'utf-8'
 
     # récuperer le texte
     soup = BeautifulSoup(r.text, 'html.parser')
@@ -35,7 +36,7 @@ def scrap_book(url_books):
         match=re.search(r"\d+",tdList[5])
         if match:
             stockAvailable=int(match.group())
-    category = soup.select('ul.breadcrumb > li > a')    
+    
     rating = soup.find('p', class_='star-rating')['class'][1]
     picture = soup.find('div', class_='item active').find('img')['src']
     picture_url = urljoin('https://books.toscrape.com/', picture)
@@ -49,7 +50,7 @@ def scrap_book(url_books):
     return {'product_page_url': url_parser,
             'universal_product_code (upc)': tdList[0],
             'title': book_title.text,
-            'category' : category[2].text,
+            'category' : tdList[2],
             'price_including_tax': tdList[3],
             'price_excluding_tax': tdList[2],
             'number_available': stockAvailable,
@@ -92,14 +93,18 @@ def scrap_category(url_category):
             info = scrap_book(url)
             results.append(info)
             picture_url = info["picture_url"]
-            nom_picture = picture_url.split("/")[-1]
-            picture_path = os.path.join(folder_pictures, nom_picture)
+            
             try:
-                img_data = requests.get(picture_url).content
+                img_data = urllib.request.urlopen(picture_url).read()
+                # Supprime les caractères spéciaux du titre
+                clean_title = re.sub(r'[<>:"/\\|?*]', '', info['title'])
+                name_picture = f"{clean_title}.jpg"
+                picture_path = os.path.join(folder_pictures, name_picture)
+                
                 with open(picture_path, 'wb') as handler:
-                    handler.write(img_data)
+                    handler.write(img_data)                
             except Exception as e:
-                print(f"Erreur téléchargement picture {picture_url}: {e}")
+                print(f"Erreur téléchargement pour '{info['title']}' ({picture_url}): {e}")
 
         if next_button:
             page += 1
@@ -117,8 +122,8 @@ def scrap_category(url_category):
         writer.writeheader()
         for livre in results:
             writer.writerow(livre)
-    print(f"Données sauvegardées dans {data_category_name}.csv")
-    print(f"images téléchargées dans {folder_pictures}")
+    print(f"Données sauvegardées dans {csv_folder} sous le nom {data_category_name}.csv")
+    print(f"images téléchargées dans {folder_pictures} sous le nom {name_picture}")
     return results
 
 def scrap_main_page (url_site):
@@ -137,7 +142,10 @@ def scrap_main_page (url_site):
         url_categorys.append(url_recup)
     #suppression du catalogue "Books"
     del url_categorys[0]
-    
+
+    for url in url_categorys:
+        scrap_category(url)
+        
 
 if __name__ == "__main__":
     scrap_main_page("https://books.toscrape.com/index.html")
