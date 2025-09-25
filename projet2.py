@@ -122,8 +122,8 @@ def scrap_category(url_category):
         writer.writeheader()
         for livre in results:
             writer.writerow(livre)
-    print(f"Données sauvegardées dans {csv_folder} sous le nom {data_category_name}.csv")
-    print(f"images téléchargées dans {folder_pictures} sous le nom {name_picture}")
+    print(f"Données sauvegardées dans {csv_folder}")
+    print(f"images téléchargées dans {folder_pictures}")
     return results
 
 def scrap_main_page (url_site):
