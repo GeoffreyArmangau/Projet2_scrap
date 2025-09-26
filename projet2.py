@@ -6,7 +6,7 @@ import urllib.request
 import csv
 import os
 
-Scrap_folder = 'Scraping_Books_online_2'
+Scrap_folder = 'Scraping_Books_online'
 Global_picture_folder = os.path.join(Scrap_folder, 'pictures')
 Global_CSV_folder = os.path.join(Scrap_folder, 'csv')
 
