@@ -9,7 +9,7 @@ Les données sont sauvegardées dans des fichiers CSV et les images dans des dos
 - Pour chaque livre : url de la page, titre, numéro UPC, prix, stock, catégorie, note, URL de l'image.
 - Téléchargement des images de chaque livre.
 - Sauvegarde des données dans des fichiers CSV par catégorie.
-- Organisation des images dans des dossiers par catégorie.
+- Organisation des images dans des dossiers par catégorie et par code upc de livre.
 
 ## Structure des dossiers générés
 
@@ -47,7 +47,7 @@ Lancez le script principal depuis votre environnement :
 python Projet2.py
 
 
-Les fichiers CSV et les images seront générés dans le dossier `Recuperation_Books_online`.
+Les fichiers CSV et les images seront générés dans le dossier `Scraping_Books_online`.
 
 ## Fichiers principaux
 

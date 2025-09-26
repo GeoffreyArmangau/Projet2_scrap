@@ -6,7 +6,7 @@ import urllib.request
 import csv
 import os
 
-Scrap_folder = 'Scraping_Books_online'
+Scrap_folder = 'Scraping_Books_online_2'
 Global_picture_folder = os.path.join(Scrap_folder, 'pictures')
 Global_CSV_folder = os.path.join(Scrap_folder, 'csv')
 
@@ -96,9 +96,9 @@ def scrap_category(url_category):
             
             try:
                 img_data = urllib.request.urlopen(picture_url).read()
-                # Supprime les caractères spéciaux du titre
-                clean_title = re.sub(r'[<>:"/\\|?*]', '', info['title'])
-                name_picture = f"{clean_title}.jpg"
+               # Utilisation de l'upc pour retrouver le livre et respecter le zip
+                upc = info['universal_product_code (upc)']
+                name_picture = f"{upc}.jpg"
                 picture_path = os.path.join(folder_pictures, name_picture)
                 
                 with open(picture_path, 'wb') as handler:
